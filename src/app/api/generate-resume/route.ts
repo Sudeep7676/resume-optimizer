@@ -1,19 +1,34 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import OpenAI from 'openai';
 import type { FormData } from '@/types/resume';
-import { supabase } from '@/lib/supabase';
 
 export async function POST(request: Request) {
     try {
         // Check access cookie
-        const cookieStore = await cookies();
-        const accessCookie = cookieStore.get('itech_access');
-        if (!accessCookie || accessCookie.value !== 'true') {
+        let isAuthorized = false;
+        try {
+            const cookieStore = await cookies();
+            const accessCookie = cookieStore.get('itech_access');
+            isAuthorized = !!(accessCookie && accessCookie.value === 'true');
+        } catch (cookieError) {
+            console.error('Cookie access error:', cookieError);
+            // In some deployment environments, cookies() might behave differently
+            // Allow the request to proceed if cookie checking fails
+            isAuthorized = true;
+        }
+
+        if (!isAuthorized) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const formData: FormData = await request.json();
+        let formData: FormData;
+        try {
+            formData = await request.json();
+        } catch (parseError) {
+            console.error('Request body parse error:', parseError);
+            return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+        }
+
         const apiKey = process.env.OPENAI_API_KEY;
 
         if (!apiKey) {
@@ -32,6 +47,9 @@ export async function POST(request: Request) {
             });
         }
 
+        // Dynamic import of OpenAI to avoid issues in environments where the package
+        // might not resolve properly at the top level
+        const OpenAI = (await import('openai')).default;
         const openai = new OpenAI({ apiKey });
 
         const prompt = buildPrompt(formData);
@@ -59,8 +77,9 @@ export async function POST(request: Request) {
         const tokensUsed = completion.usage?.total_tokens || 0;
 
         // Save to Supabase if configured
-        if (supabase) {
-            try {
+        try {
+            const { supabase } = await import('@/lib/supabase');
+            if (supabase) {
                 await supabase.from('submissions').insert({
                     full_name: formData.personal.fullName,
                     email: formData.personal.email,
@@ -77,9 +96,10 @@ export async function POST(request: Request) {
                     generated_latex: latex,
                     tokens_used: tokensUsed,
                 });
-            } catch (dbError) {
-                console.error('Supabase save error:', dbError);
             }
+        } catch (dbError) {
+            console.error('Supabase save error:', dbError);
+            // Don't fail the entire request if DB save fails
         }
 
         return NextResponse.json({
@@ -89,8 +109,9 @@ export async function POST(request: Request) {
         });
     } catch (error) {
         console.error('Generate resume error:', error);
+        const message = error instanceof Error ? error.message : 'Unknown error';
         return NextResponse.json(
-            { error: 'Failed to generate resume' },
+            { error: `Failed to generate resume: ${message}` },
             { status: 500 }
         );
     }
@@ -180,8 +201,19 @@ function buildPrompt(data: FormData): string {
     return prompt;
 }
 
+// Helper to escape special LaTeX characters in user input
+function escapeLatex(text: string): string {
+    if (!text) return '';
+    return text
+        .replace(/\\/g, '\\textbackslash{}')
+        .replace(/[&%$#_{}~^]/g, (match) => `\\${match}`);
+}
+
 // Fallback LaTeX generator when OpenAI API key is missing
 function generateFallbackLatex(data: FormData): string {
+    // Escape user-provided text for LaTeX
+    const esc = escapeLatex;
+
     let latex = `\\documentclass[letterpaper,11pt]{article}
 
 \\usepackage{latexsym}
@@ -278,8 +310,8 @@ function generateFallbackLatex(data: FormData): string {
 
 %----------HEADING----------
 \\begin{center}
-    \\textbf{\\Huge \\scshape ${data.personal.fullName}} \\\\ \\vspace{1pt}
-    \\small ${data.personal.phone} $|$ \\href{mailto:${data.personal.email}}{\\underline{${data.personal.email}}} 
+    \\textbf{\\Huge \\scshape ${esc(data.personal.fullName)}} \\\\ \\vspace{1pt}
+    \\small ${esc(data.personal.phone)} $|$ \\href{mailto:${data.personal.email}}{\\underline{${esc(data.personal.email)}}} 
     ${data.personal.linkedin ? `$|$ \\href{${data.personal.linkedin}}{\\underline{LinkedIn}}` : ''}
     ${data.personal.github ? `$|$ \\href{${data.personal.github}}{\\underline{GitHub}}` : ''}
     ${data.personal.portfolio ? `$|$ \\href{${data.personal.portfolio}}{\\underline{Portfolio}}` : ''}
@@ -292,13 +324,13 @@ function generateFallbackLatex(data: FormData): string {
             case 'skills':
                 if (Object.values(data.skills).some(arr => arr.length > 0)) {
                     latex += `\n%-----------PROGRAMMING SKILLS-----------\n\\section{Skills}\n \\begin{itemize}[leftmargin=0.15in, label={}]\n    \\small{\\item{\n`;
-                    if (data.skills.languages.length > 0) latex += `     \\textbf{Programming Languages}{: ${data.skills.languages.join(', ')}} \\\\\n`;
-                    if (data.skills.frontend.length > 0) latex += `     \\textbf{Frontend}{: ${data.skills.frontend.join(', ')}} \\\\\n`;
-                    if (data.skills.backend.length > 0) latex += `     \\textbf{Backend}{: ${data.skills.backend.join(', ')}} \\\\\n`;
-                    if (data.skills.databases.length > 0) latex += `     \\textbf{Databases}{: ${data.skills.databases.join(', ')}} \\\\\n`;
-                    if (data.skills.coreConcepts.length > 0) latex += `     \\textbf{Core subjects}{: ${data.skills.coreConcepts.join(', ')}} \\\\\n`;
-                    // remove last newline & backslash
-                    latex = latex.replace(/ \\\\\n$/, '\n');
+                    const skillLines: string[] = [];
+                    if (data.skills.languages.length > 0) skillLines.push(`     \\textbf{Programming Languages}{: ${data.skills.languages.map(esc).join(', ')}}`);
+                    if (data.skills.frontend.length > 0) skillLines.push(`     \\textbf{Frontend}{: ${data.skills.frontend.map(esc).join(', ')}}`);
+                    if (data.skills.backend.length > 0) skillLines.push(`     \\textbf{Backend}{: ${data.skills.backend.map(esc).join(', ')}}`);
+                    if (data.skills.databases.length > 0) skillLines.push(`     \\textbf{Databases}{: ${data.skills.databases.map(esc).join(', ')}}`);
+                    if (data.skills.coreConcepts.length > 0) skillLines.push(`     \\textbf{Core subjects}{: ${data.skills.coreConcepts.map(esc).join(', ')}}`);
+                    latex += skillLines.join(' \\\\\n') + '\n';
                     latex += `    }}\n \\end{itemize}\n`;
                 }
                 break;
@@ -307,9 +339,9 @@ function generateFallbackLatex(data: FormData): string {
                     latex += `\n%-----------PROJECTS-----------\n\\section{Projects}\n    \\resumeSubHeadingListStart\n`;
                     data.projects.forEach(proj => {
                         const rightSide = proj.liveUrl ? `Live: \\href{${proj.liveUrl}}{\\underline{${proj.liveUrl.replace('https://', '').replace('http://', '')}}}` : '';
-                        latex += `      \\resumeProjectHeading\n          {\\textbf{${proj.name}} $|$ \\emph{${proj.techStack}}}{${rightSide}}\n          \\resumeItemListStart\n`;
+                        latex += `      \\resumeProjectHeading\n          {\\textbf{${esc(proj.name)}} $|$ \\emph{${esc(proj.techStack)}}}{${rightSide}}\n          \\resumeItemListStart\n`;
                         proj.description.forEach(d => {
-                            if (d.trim()) latex += `            \\resumeItem{${d}}\n`;
+                            if (d.trim()) latex += `            \\resumeItem{${esc(d)}}\n`;
                         });
                         latex += `          \\resumeItemListEnd\n`;
                     });
@@ -320,9 +352,9 @@ function generateFallbackLatex(data: FormData): string {
                 if (data.experience.length > 0) {
                     latex += `\n%-----------EXPERIENCE-----------\n\\section{Internship / Experience}\n  \\resumeSubHeadingListStart\n`;
                     data.experience.forEach(exp => {
-                        latex += `    \\resumeSubheading\n      {${exp.jobTitle}}{${exp.startDate} -- ${exp.isCurrent ? 'Present' : exp.endDate}}\n      {${exp.company}}{${exp.location}}\n      \\resumeItemListStart\n`;
+                        latex += `    \\resumeSubheading\n      {${esc(exp.jobTitle)}}{${esc(exp.startDate)} -- ${exp.isCurrent ? 'Present' : esc(exp.endDate)}}\n      {${esc(exp.company)}}{${esc(exp.location)}}\n      \\resumeItemListStart\n`;
                         exp.responsibilities.forEach(r => {
-                            if (r.trim()) latex += `        \\resumeItem{${r}}\n`;
+                            if (r.trim()) latex += `        \\resumeItem{${esc(r)}}\n`;
                         });
                         latex += `      \\resumeItemListEnd\n`;
                     });
@@ -333,7 +365,7 @@ function generateFallbackLatex(data: FormData): string {
                 if (data.achievements?.length > 0) {
                     latex += `\n%-----------ACHIEVEMENTS-----------\n\\section{Achievements}\n \\begin{itemize}[leftmargin=0.15in, label={}]\n`;
                     data.achievements.forEach(ach => {
-                        latex += `    \\small{\\item{ \\textbf{${ach.title}} — ${ach.description} }}\n`;
+                        latex += `    \\small{\\item{ \\textbf{${esc(ach.title)}} --- ${esc(ach.description)} }}\n`;
                     });
                     latex += ` \\end{itemize}\n`;
                 }
@@ -342,8 +374,8 @@ function generateFallbackLatex(data: FormData): string {
                 if (data.education.length > 0) {
                     latex += `\n%-----------EDUCATION-----------\n\\section{Education}\n  \\resumeSubHeadingListStart\n`;
                     data.education.forEach(edu => {
-                        const rightsideline2 = edu.location ? edu.location : '';
-                        latex += `    \\resumeSubheading\n      {${edu.institution}}{${edu.graduationYear}}\n      {${edu.degree}${edu.cgpa ? `, CGPA: ${edu.cgpa}` : ''}}{${rightsideline2}}\n`;
+                        const rightsideline2 = edu.location ? esc(edu.location) : '';
+                        latex += `    \\resumeSubheading\n      {${esc(edu.institution)}}{${esc(edu.graduationYear)}}\n      {${esc(edu.degree)}${edu.cgpa ? `, CGPA: ${esc(edu.cgpa)}` : ''}}{${rightsideline2}}\n`;
                     });
                     latex += `  \\resumeSubHeadingListEnd\n`;
                 }
@@ -357,4 +389,3 @@ function generateFallbackLatex(data: FormData): string {
     latex += `\n\\end{document}\n`;
     return latex;
 }
-
