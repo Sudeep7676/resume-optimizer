@@ -31,7 +31,13 @@ export async function POST(request: Request) {
 
         const apiKey = process.env.OPENAI_API_KEY;
 
-        if (!apiKey) {
+        const isKeyMissing = !apiKey || 
+                             apiKey.trim() === '' || 
+                             apiKey.toLowerCase() === 'none' || 
+                             apiKey.toLowerCase() === 'null' || 
+                             apiKey.toLowerCase() === 'undefined';
+
+        if (isKeyMissing) {
             // FALLBACK MODE: Return a basic LaTeX template populated with the form data
             // This allows the app to function for testing without requiring an OpenAI API key
             const fallbackLatex = generateFallbackLatex(formData);
