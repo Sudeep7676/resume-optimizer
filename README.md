@@ -84,4 +84,8 @@ CREATE TABLE submissions (
 
 ## License
 
-Private — ITech Next Gen Pvt Ltd
+Private — © 2026 ITech Next Gen Pvt Ltd  
+For inquiries: nextgenlabs.edu@gmail.com  
+
+This project and its source code are proprietary and confidential.  
+Unauthorized copying, modification, distribution, or use of this software, via any medium, is strictly prohibited without explicit permission from ITech Next Gen Pvt Ltd.
