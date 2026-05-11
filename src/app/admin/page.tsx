@@ -202,7 +202,10 @@ export default function AdminPage() {
             {/* Header */}
             <div className="border-b border-white/5 bg-[#0a0f1e]/80 backdrop-blur-xl sticky top-0 z-40">
                 <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-                    <h1 className="text-lg font-bold text-white">📊 Admin Dashboard</h1>
+                    <h1 className="text-lg font-bold text-white flex items-center gap-2.5">
+                        <img src="/logo.png" alt="NextGen Labs" className="w-8 h-8 rounded-lg object-contain" />
+                        Admin Dashboard
+                    </h1>
                     <div className="flex items-center gap-4">
                         <span className="text-gray-500 text-sm">
                             {activeTab === 'submissions'

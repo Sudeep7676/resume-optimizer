@@ -87,9 +87,7 @@ export default function PreviewPage() {
             <div className="border-b border-white/5 bg-[#0a0f1e]/80 backdrop-blur-xl sticky top-0 z-40">
                 <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
                     <Link href="/" className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                            <span className="text-white font-bold text-xs">iT</span>
-                        </div>
+                        <img src="/logo.png" alt="NextGen Labs" className="w-8 h-8 rounded-lg object-contain" />
                         <span className="text-white font-semibold hidden sm:block">Resume Preview</span>
                     </Link>
                     <div className="flex items-center gap-2 text-xs text-gray-400">
