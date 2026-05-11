@@ -26,12 +26,8 @@ export function middleware(request: NextRequest) {
         return NextResponse.next();
     }
 
-    // Protect /admin routes
+    // Allow /admin — the page handles its own authentication
     if (pathname.startsWith('/admin')) {
-        const adminSession = request.cookies.get('itech_admin');
-        if (!adminSession || adminSession.value !== 'true') {
-            return NextResponse.redirect(new URL('/', request.url));
-        }
         return NextResponse.next();
     }
 
