@@ -19,6 +19,7 @@ export function middleware(request: NextRequest) {
         pathname === '/feedback' ||
         pathname.startsWith('/api/unlock') ||
         pathname.startsWith('/api/feedback') ||
+        pathname.startsWith('/api/contact') ||
         pathname.startsWith('/_next') ||
         pathname.startsWith('/favicon')
     ) {
