@@ -153,7 +153,7 @@ export default function TestimonialsSection() {
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 italic">Say</span>
                     </h2>
                     <p className="text-gray-400 text-lg mb-8 max-w-lg mx-auto">
-                        Be the first to share your experience with the Resume Optimizer!
+                        Be the first to share your experience with the Resume Builder!
                     </p>
                     <Link
                         href="/feedback"

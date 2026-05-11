@@ -236,7 +236,7 @@ export default function FeedbackPage() {
                                     </span>
                                 </h1>
                                 <p className="text-gray-400 text-lg max-w-lg mx-auto">
-                                    Help us improve the Resume Optimizer by sharing your thoughts and experience.
+                                    Help us improve the Resume Builder by sharing your thoughts and experience.
                                 </p>
                             </div>
 
@@ -338,7 +338,7 @@ export default function FeedbackPage() {
                                             <textarea
                                                 value={message}
                                                 onChange={(e) => setMessage(e.target.value)}
-                                                placeholder="Tell us about your experience with the Resume Optimizer..."
+                                                placeholder="Tell us about your experience with the Resume Builder..."
                                                 required
                                                 rows={4}
                                                 className="w-full px-4 py-3 bg-black/30 border border-white/10 rounded-xl text-white placeholder-gray-600 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all text-sm resize-none"

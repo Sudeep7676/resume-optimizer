@@ -193,7 +193,7 @@ export default function UnlockPage() {
                                 }}
                                 className="italic"
                             >
-                                Optimizer
+                                Builder
                             </span>
                         </h2>
                         <div className="flex items-center justify-center gap-3 text-gray-500 text-xs">

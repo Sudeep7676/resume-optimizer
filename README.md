@@ -1,4 +1,4 @@
-# Resume Optimizer — ITech Next Gen Pvt Ltd
+# Resume Builder — ITech Next Gen Pvt Ltd
 
 A production-ready, AI-powered resume builder that generates ATS-optimized LaTeX resumes using OpenAI GPT-4o.
 

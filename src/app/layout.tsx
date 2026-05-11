@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Resume Optimizer | NextGen Labs Pvt Ltd",
+  title: "Resume Builder | NextGen Labs Pvt Ltd",
   description:
     "Build a recruiter-ready resume with structured AI prompts and professional LaTeX workflow. Powered by NextGen Labs.",
   keywords: ["resume", "LaTeX", "AI", "resume builder", "ATS", "NextGen Labs"],
