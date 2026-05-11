@@ -55,6 +55,21 @@ CREATE TABLE submissions (
 );
 ```
 
+Create a `feedback` table for the feedback system:
+
+```sql
+CREATE TABLE feedback (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  name text NOT NULL,
+  email text,
+  rating integer NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  emoji text,
+  message text NOT NULL,
+  is_approved boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now()
+);
+```
+
 ## Pages
 
 | Route | Description |
@@ -63,7 +78,8 @@ CREATE TABLE submissions (
 | `/unlock` | Password-protected access gate |
 | `/resume/enroll` | 5-step resume form |
 | `/resume/preview` | LaTeX preview + export |
-| `/admin` | Submissions dashboard |
+| `/feedback` | User feedback / rating form |
+| `/admin` | Submissions + feedback dashboard |
 
 ## API Routes
 
@@ -74,6 +90,11 @@ CREATE TABLE submissions (
 | POST | `/api/save-submission` | Save to Supabase |
 | GET | `/api/admin/submissions` | Fetch all submissions |
 | POST | `/api/admin/login` | Admin authentication |
+| POST | `/api/feedback` | Submit feedback (public) |
+| GET | `/api/feedback?approved=true` | Fetch approved feedback |
+| GET | `/api/feedback?key=...` | Fetch all feedback (admin) |
+| PATCH | `/api/feedback?key=...` | Toggle feedback approval |
+| DELETE | `/api/feedback?key=...&id=...` | Delete feedback |
 
 ## Deployment (Vercel)
 

@@ -16,7 +16,9 @@ export function middleware(request: NextRequest) {
     // Public routes — allow access
     if (
         pathname === '/unlock' ||
+        pathname === '/feedback' ||
         pathname.startsWith('/api/unlock') ||
+        pathname.startsWith('/api/feedback') ||
         pathname.startsWith('/_next') ||
         pathname.startsWith('/favicon')
     ) {

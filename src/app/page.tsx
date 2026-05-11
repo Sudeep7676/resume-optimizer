@@ -7,6 +7,7 @@ import ThreeSteps from '@/components/landing/ThreeSteps';
 import TemplatePreview from '@/components/landing/TemplatePreview';
 import ExportGuide from '@/components/landing/ExportGuide';
 import MoreTools from '@/components/landing/MoreTools';
+import TestimonialsSection from '@/components/landing/TestimonialsSection';
 import AboutSection from '@/components/landing/AboutSection';
 import ContactSection from '@/components/landing/ContactSection';
 
@@ -25,6 +26,7 @@ export default function HomePage() {
         <TemplatePreview />
         <ExportGuide />
         <MoreTools />
+        <TestimonialsSection />
         <AboutSection />
         <ContactSection />
         

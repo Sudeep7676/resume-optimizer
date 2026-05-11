@@ -57,6 +57,12 @@ export default function Navbar() {
                             Contact Us
                         </a>
                         <Link
+                            href="/feedback"
+                            className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
+                        >
+                            Feedback
+                        </Link>
+                        <Link
                             href="/resume/enroll"
                             className="hidden sm:inline-flex items-center justify-center px-5 py-2 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 transition-colors shadow-lg shadow-blue-500/25"
                         >
