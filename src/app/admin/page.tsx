@@ -101,7 +101,7 @@ export default function AdminPage() {
                 fetchSubmissions(password);
                 fetchFeedback(password);
             } else {
-                setError('Incorrect admin password');
+                setError('Incorrect password');
             }
         } catch {
             setError('Login failed');

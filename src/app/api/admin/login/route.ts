@@ -4,12 +4,13 @@ export async function POST(request: Request) {
     try {
         const { password } = await request.json();
         const adminPassword = process.env.ADMIN_PASSWORD;
+        const accessPassword = process.env.PRIVATE_ACCESS_PASSWORD;
 
-        if (!adminPassword) {
+        if (!adminPassword && !accessPassword) {
             return NextResponse.json({ error: 'Not configured' }, { status: 500 });
         }
 
-        if (password === adminPassword) {
+        if (password === adminPassword || password === accessPassword) {
             const response = NextResponse.json({ success: true });
             response.cookies.set('itech_admin', 'true', {
                 httpOnly: true,
