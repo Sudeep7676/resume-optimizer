@@ -12,7 +12,14 @@ interface FeedbackItem {
     rating: number;
     emoji: string | null;
     message: string;
+    category?: string;
+    sentiment?: string;
     is_approved: boolean;
+    is_featured?: boolean;
+    admin_reply?: string | null;
+    replied_at?: string | null;
+    helpful_count?: number;
+    tags?: string[];
     created_at: string;
 }
 
@@ -136,6 +143,40 @@ export default function AdminPage() {
             }
         } catch {
             setError('Failed to update feedback');
+        }
+    };
+
+    const handleToggleFeatured = async (id: string, currentStatus: boolean) => {
+        try {
+            const res = await fetch(`/api/feedback?key=${encodeURIComponent(adminKey)}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, is_featured: !currentStatus }),
+            });
+            if (res.ok) {
+                setFeedbackList(feedbackList.map(f =>
+                    f.id === id ? { ...f, is_featured: !currentStatus } : f
+                ));
+            }
+        } catch {
+            setError('Failed to update');
+        }
+    };
+
+    const handleAdminReply = async (id: string, reply: string) => {
+        try {
+            const res = await fetch(`/api/feedback?key=${encodeURIComponent(adminKey)}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, admin_reply: reply }),
+            });
+            if (res.ok) {
+                setFeedbackList(feedbackList.map(f =>
+                    f.id === id ? { ...f, admin_reply: reply, replied_at: new Date().toISOString() } : f
+                ));
+            }
+        } catch {
+            setError('Failed to save reply');
         }
     };
 
@@ -356,7 +397,7 @@ export default function AdminPage() {
                             transition={{ duration: 0.2 }}
                         >
                             {/* Stats row */}
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
                                 <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4">
                                     <p className="text-gray-500 text-xs font-medium uppercase tracking-wider mb-1">Total</p>
                                     <p className="text-2xl font-bold text-white">{feedbackList.length}</p>
@@ -368,6 +409,10 @@ export default function AdminPage() {
                                 <div className="rounded-xl border border-amber-500/10 bg-amber-500/[0.03] p-4">
                                     <p className="text-amber-400/70 text-xs font-medium uppercase tracking-wider mb-1">Pending</p>
                                     <p className="text-2xl font-bold text-amber-400">{feedbackList.filter(f => !f.is_approved).length}</p>
+                                </div>
+                                <div className="rounded-xl border border-purple-500/10 bg-purple-500/[0.03] p-4">
+                                    <p className="text-purple-400/70 text-xs font-medium uppercase tracking-wider mb-1">Featured</p>
+                                    <p className="text-2xl font-bold text-purple-400">{feedbackList.filter(f => f.is_featured).length}</p>
                                 </div>
                                 <div className="rounded-xl border border-yellow-500/10 bg-yellow-500/[0.03] p-4">
                                     <p className="text-yellow-400/70 text-xs font-medium uppercase tracking-wider mb-1">Avg Rating</p>
@@ -441,13 +486,24 @@ export default function AdminPage() {
                                                         <div className="flex items-center justify-end gap-2">
                                                             <button
                                                                 onClick={() => handleToggleApproval(fb.id, fb.is_approved)}
-                                                                className={`text-xs cursor-pointer font-medium ${
-                                                                    fb.is_approved
-                                                                        ? 'text-amber-400 hover:text-amber-300'
-                                                                        : 'text-green-400 hover:text-green-300'
-                                                                }`}
+                                                                className={`text-xs cursor-pointer font-medium ${fb.is_approved ? 'text-amber-400 hover:text-amber-300' : 'text-green-400 hover:text-green-300'}`}
                                                             >
                                                                 {fb.is_approved ? 'Unapprove' : 'Approve'}
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleToggleFeatured(fb.id, !!fb.is_featured)}
+                                                                className={`text-xs cursor-pointer font-medium ${fb.is_featured ? 'text-yellow-400 hover:text-yellow-300' : 'text-gray-500 hover:text-yellow-400'}`}
+                                                            >
+                                                                {fb.is_featured ? '★ Unfeature' : '☆ Feature'}
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    const reply = prompt('Admin reply:', fb.admin_reply || '');
+                                                                    if (reply !== null) handleAdminReply(fb.id, reply);
+                                                                }}
+                                                                className="text-blue-400 hover:text-blue-300 text-xs cursor-pointer"
+                                                            >
+                                                                {fb.admin_reply ? '✏️ Edit Reply' : '💬 Reply'}
                                                             </button>
                                                             <button
                                                                 onClick={() => handleDeleteFeedback(fb.id)}
